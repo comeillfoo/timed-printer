@@ -28,8 +28,8 @@ MODULE_DESCRIPTION( "Periodically writes 'Hello from kernel module' to the commo
 static long secs = DEFAULT_TIMEOUT;
 module_param( secs, long, S_IRUSR | S_IWUSR );
 
-static char* common_fpath = DEFAULT_FILE_PATH;
-module_param( common_fpath, charp, S_IRUSR | S_IWUSR );
+static char* common_file_path = DEFAULT_FILE_PATH;
+module_param( common_file_path, charp, S_IRUSR | S_IWUSR );
 
 static loff_t f_offset = 0;
 
@@ -37,7 +37,7 @@ static struct hrtimer main_timer;
 // static ktime_t period;
 
 static int append_err = 0;
-static int append( const char* fpath );
+static int append( const char* file_path );
 
 static void workqueue_cb( struct work_struct* work );
 
@@ -45,7 +45,7 @@ static void workqueue_cb( struct work_struct* work );
 DECLARE_WORK( workqueue, workqueue_cb );
 
 static void workqueue_cb( struct work_struct* work ) {
-  append_err = append( common_fpath );
+  append_err = append( common_file_path );
 }
  
 
@@ -86,14 +86,14 @@ static const char* text = "Hello from kernel module\n";
 static const size_t length = 25;
 
 
-static int append( const char* fpath ) {
+static int append( const char* file_path ) {
   ssize_t count = 0;
   int err = 0;
   struct file* file_p = NULL;
 
-  file_p = filp_open( common_fpath, O_RDWR | O_CREAT | O_APPEND, 0666 );
+  file_p = filp_open( file_path, O_RDWR | O_CREAT | O_APPEND, 0666 );
   if ( IS_ERR( file_p ) ) {
-    printk( KERN_ALERT MOD_NAME ": can't open the file %s with error %ld\n", common_fpath, PTR_ERR( file_p ) );
+    printk( KERN_ALERT MOD_NAME ": can't open the file %s with error %ld\n", file_path, PTR_ERR( file_p ) );
     return PTR_ERR( file_p );
   }
 
@@ -103,7 +103,7 @@ static int append( const char* fpath ) {
 
   err = filp_close( file_p, NULL );
   if ( err ) {
-    printk( KERN_ALERT MOD_NAME ": can't close the file %s properly\n", common_fpath );
+    printk( KERN_ALERT MOD_NAME ": can't close the file %s properly\n", file_path );
     return err;
   }
 

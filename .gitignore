@@ -5,3 +5,5 @@
 !Makefile
 !src
 !src/*.c
+!*.py
+!*.sh

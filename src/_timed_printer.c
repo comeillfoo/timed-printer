@@ -11,6 +11,8 @@
 
 #include <linux/string.h>
 
+#include <linux/workqueue.h>
+
 
 MODULE_LICENSE( "Dual MIT/GPL" );
 MODULE_AUTHOR( "come_ill_foo" );
@@ -34,16 +36,24 @@ static loff_t f_offset = 0;
 static struct hrtimer main_timer;
 static ktime_t period;
 
-
+static int append_err = 0;
 static int append( const char* fpath );
 
+static void workqueue_cb( struct work_struct* work );
+
+
+DECLARE_WORK( workqueue, workqueue_cb );
+
+static void workqueue_cb( struct work_struct* work ) {
+  append_err = append( common_fpath );
+}
+ 
 
 static enum hrtimer_restart timed_print( struct hrtimer* timer ) {
-  
-  int err = append( common_fpath );
-  if ( err )
+  if ( append_err )
     return HRTIMER_NORESTART;
 
+  schedule_work( &workqueue );
   hrtimer_forward_now( timer, period );
 
   return HRTIMER_RESTART;
@@ -74,6 +84,7 @@ module_exit( cleanup_tprinter );
 
 static const char* text = "Hello from kernel module\n";
 static const size_t length = 25;
+
 
 static int append( const char* fpath ) {
   ssize_t count = 0;

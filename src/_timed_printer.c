@@ -34,7 +34,7 @@ module_param( common_fpath, charp, S_IRUSR | S_IWUSR );
 static loff_t f_offset = 0;
 
 static struct hrtimer main_timer;
-static ktime_t period;
+// static ktime_t period;
 
 static int append_err = 0;
 static int append( const char* fpath );
@@ -54,7 +54,7 @@ static enum hrtimer_restart timed_print( struct hrtimer* timer ) {
     return HRTIMER_NORESTART;
 
   schedule_work( &workqueue );
-  hrtimer_forward_now( timer, period );
+  hrtimer_forward_now( timer, ktime_set( secs, 0 ) );
 
   return HRTIMER_RESTART;
 }
@@ -63,10 +63,10 @@ static enum hrtimer_restart timed_print( struct hrtimer* timer ) {
 static int __init init_tprinter( void ) {
   printk( KERN_INFO MOD_NAME": module inited\n" );
 
-  period = ktime_set( secs, 0 ); // seconds, nanoseconds
+  // period = ktime_set( secs, 0 ); // seconds, nanoseconds
   hrtimer_init( &main_timer, CLOCK_REALTIME, HRTIMER_MODE_REL );
   main_timer.function = timed_print;
-  hrtimer_start( &main_timer, period, HRTIMER_MODE_REL );
+  hrtimer_start( &main_timer, ktime_set( secs, 0 ), HRTIMER_MODE_REL );
 
   return 0;
 }
